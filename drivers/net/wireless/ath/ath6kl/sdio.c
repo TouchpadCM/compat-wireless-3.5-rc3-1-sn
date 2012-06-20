@@ -29,6 +29,29 @@
 #include "debug.h"
 #include "cfg80211.h"
 
+#define PLAT_WOW_GPIO_PIN 137
+
+#ifdef CONFIG_HAS_WAKELOCK
+#include <linux/wakelock.h>
+#endif
+
+#ifdef CONFIG_PM
+
+#if PLAT_WOW_GPIO_PIN
+#include <linux/gpio.h>
+#endif
+
+#if PLAT_WOW_GPIO_PIN
+static int wow_irq;
+#endif /* PLAT_WOW_GPIO_PIN */
+
+#ifdef CONFIG_HAS_WAKELOCK
+struct wake_lock ath6kl_suspend_wake_lock;
+struct wake_lock ath6kl_wow_wake_lock;
+#endif
+#endif /* CONFIG_PM */
+
+
 struct ath6kl_sdio {
 	struct sdio_func *func;
 
@@ -1310,6 +1333,19 @@ static SIMPLE_DEV_PM_OPS(ath6kl_sdio_pm_ops, ath6kl_sdio_pm_suspend,
 
 #endif /* CONFIG_PM_SLEEP */
 
+#if PLAT_WOW_GPIO_PIN
+static irqreturn_t
+ath6kl_wow_irq(int irq, void *dev_id)
+{
+#ifdef CONFIG_HAS_WAKELOCK
+    wake_lock_timeout(&ath6kl_wow_wake_lock, 3*HZ);
+#else
+    /* TODO: What should I do if there is no wake lock?? */
+#endif
+    return IRQ_HANDLED;
+}
+#endif /* PLAT_WOW_GPIO_PIN */
+
 static int ath6kl_sdio_probe(struct sdio_func *func,
 			     const struct sdio_device_id *id)
 {
@@ -1440,6 +1476,25 @@ static int __init ath6kl_sdio_init(void)
 
 #ifdef ATH6KL_ENABLE_ANDROID
 	ath6kl_sdio_init_android();
+#ifdef CONFIG_HAS_WAKELOCK
+    wake_lock_init(&ath6kl_suspend_wake_lock, WAKE_LOCK_SUSPEND, "ath6kl_suspend");
+    wake_lock_init(&ath6kl_wow_wake_lock, WAKE_LOCK_SUSPEND, "ath6kl_wow");
+#endif
+#if PLAT_WOW_GPIO_PIN
+    wow_irq = gpio_to_irq(PLAT_WOW_GPIO_PIN);
+    if (wow_irq) {
+        int ret;
+        ret = request_irq(wow_irq, ath6kl_wow_irq,
+                        IRQF_SHARED | IRQF_TRIGGER_RISING,
+                        "ath6kl" "sdiowakeup", &wow_irq);
+        if (!ret) {
+            ret = enable_irq_wake(wow_irq);
+            if (ret < 0) {
+                printk(KERN_ERR "Couldn't enable WoW IRQ as wakeup interrupt");
+            }
+        }
+    }
+#endif /* PLAT_WOW_GPIO_PIN */
 #endif
 	ret = sdio_register_driver(&ath6kl_sdio_driver);
 	if (ret)
@@ -1453,6 +1508,21 @@ static void __exit ath6kl_sdio_exit(void)
 	sdio_unregister_driver(&ath6kl_sdio_driver);
 #ifdef ATH6KL_ENABLE_ANDROID
 	ath6kl_sdio_exit_android();
+#ifdef CONFIG_PM
+#if PLAT_WOW_GPIO_PIN
+    if (wow_irq) {
+        if (disable_irq_wake(wow_irq)) {
+             printk(KERN_ERR "Couldn't disable hostwake IRQ wakeup mode\n");
+        }
+        free_irq(wow_irq, &wow_irq);
+        wow_irq = 0;
+    }
+#endif /* PLAT_WOW_GPIO_PIN */
+#ifdef CONFIG_HAS_WAKELOCK
+    wake_lock_destroy(&ath6kl_suspend_wake_lock);
+    wake_lock_destroy(&ath6kl_wow_wake_lock);
+#endif
+#endif
 #endif
 }
 

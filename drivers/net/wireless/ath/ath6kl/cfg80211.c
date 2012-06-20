@@ -30,6 +30,11 @@
 #include "hif-ops.h"
 #include "testmode.h"
 
+#ifdef CONFIG_HAS_WAKELOCK
+#include <linux/wakelock.h>
+extern struct wake_lock ath6kl_wow_wake_lock;
+#endif
+
 #define RATETAB_ENT(_rate, _rateid, _flags) {   \
 	.bitrate    = (_rate),                  \
 	.flags      = (_flags),                 \
@@ -2183,6 +2188,10 @@ static int ath6kl_wow_resume(struct ath6kl *ar)
 		return -EIO;
 
 	ar->state = ATH6KL_STATE_RESUMING;
+
+#ifdef CONFIG_HAS_WAKELOCK
+            wake_lock_timeout(&ath6kl_wow_wake_lock, 3*HZ);
+#endif
 
 	ret = ath6kl_wmi_set_host_sleep_mode_cmd(ar->wmi, vif->fw_vif_idx,
 						 ATH6KL_HOST_MODE_AWAKE);
