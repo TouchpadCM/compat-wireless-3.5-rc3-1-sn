@@ -1,0 +1,8 @@
+compat/modules.order
+drivers/net/wireless/ath/ath6kl/modules.order
+drivers/net/wireless/ath/modules.order
+drivers/net/wireless/modules.order
+include/linux/compat_autoconf.h
+net/mac80211/modules.order
+net/rfkill/modules.order
+net/wireless/modules.order
