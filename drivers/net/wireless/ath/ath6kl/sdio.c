@@ -1477,7 +1477,7 @@ static int __init ath6kl_sdio_init(void)
 	int ret;
 
 #ifdef ATH6KL_ENABLE_ANDROID
-	printk(KERN_INFO "CMTP-ATH6KL v4.3.1\n");
+	printk(KERN_INFO "CMTP-ATH6KL v4.3.2\n");
 	ath6kl_sdio_init_android();
 #ifdef CONFIG_HAS_WAKELOCK
     wake_lock_init(&ath6kl_suspend_wake_lock, WAKE_LOCK_SUSPEND, "ath6kl_suspend");
