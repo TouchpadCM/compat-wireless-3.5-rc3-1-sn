@@ -3546,8 +3546,11 @@ int ath6kl_cfg80211_init(struct ath6kl *ar)
 			    WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL |
 			    WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD;
 
+#if 0
+	// disable scheduled scan, doesn't seem to work correctly in CM10
 	if (test_bit(ATH6KL_FW_CAPABILITY_SCHED_SCAN, ar->fw_capabilities))
 		ar->wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
+#endif
 
 	if (test_bit(ATH6KL_FW_CAPABILITY_INACTIVITY_TIMEOUT,
 		     ar->fw_capabilities))
