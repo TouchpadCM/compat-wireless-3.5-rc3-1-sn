@@ -874,10 +874,8 @@ void ath6kl_core_destroy(struct ath6kl *ar);
 #ifdef CONFIG_MACH_TENDERLOIN
 int board_sdio_wifi_enable(int);
 int board_sdio_wifi_disable(int);
-int board_get_wow_pin();
 #define ath6kl_sdio_init_android() board_sdio_wifi_enable(1)
 #define ath6kl_sdio_exit_android() board_sdio_wifi_disable(1)
-#define platform_get_wow_pin() board_get_wow_pin()
 #define ATH6KL_ENABLE_ANDROID 1
 #endif
 

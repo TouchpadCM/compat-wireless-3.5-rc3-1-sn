@@ -29,8 +29,7 @@
 #include "debug.h"
 #include "cfg80211.h"
 
-/* note: use platform_get_wow_pin */
-#define PLAT_WOW_GPIO_PIN -1
+#define PLAT_WOW_GPIO_PIN 137
 
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
@@ -43,7 +42,6 @@
 #endif
 
 #if PLAT_WOW_GPIO_PIN
-static int wow_pin;
 static int wow_irq;
 #endif /* PLAT_WOW_GPIO_PIN */
 
@@ -1484,12 +1482,7 @@ static int __init ath6kl_sdio_init(void)
     wake_lock_init(&ath6kl_wow_wake_lock, WAKE_LOCK_SUSPEND, "ath6kl_wow");
 #endif
 #if PLAT_WOW_GPIO_PIN
-    wow_pin = platform_get_wow_pin();
-    if (wow_pin < 0) {
-        printk(KERN_ERR "%s: Failed to request platform wow_pin\n", __func__);
-        return -1;
-    }
-    wow_irq = gpio_to_irq(wow_pin);
+    wow_irq = gpio_to_irq(PLAT_WOW_GPIO_PIN);
     if (wow_irq) {
         int ret;
         ret = request_irq(wow_irq, ath6kl_wow_irq,
